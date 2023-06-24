@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tanvir</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="loading-screen">N</div>
+
+  <header>
+    <h1>Tanvir</h1>
+    <form id="search-form">
+      <input type="text" id="search-input" placeholder="Search videos...">
+      <button type="submit">Search</button>
+    </form>
+    <div id="user-profile">
+      <div id="user-avatar"></div>
+      <span id="user-name"></span>
+      <button id="logout-button">Logout</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="video-player">
+      <video id="video" controls autoplay>
+        <source src="" type="video/mp4">
+      </video>
+    </div>
+
+    <div id="video-list">
+      <ul></ul>
+    </div>
+
+    <form id="video-upload-form">
+      <input type="file" id="video-upload" accept="video/mp4">
+      <button type="submit">Upload Video</button>
+    </form>
+  </main>
+
+  <footer>
+    <div id="watch-later-list">
+      <h3>Watch Later</h3>
+      <ul></ul>
+    </div>
+    <div id="history-list">
+      <h3>History</h3>
+      <ul></ul>
+    </div>
+  </footer>
+
+  <script src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v13.0&appId=YOUR_APP_ID&autoLogAppEvents=1" nonce="YOUR_NONCE_VALUE"></script>
+  <script src="main.js"></script>
+</body>
+</html>
+/* CSS styles here */
+.thumbnail {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+#loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 100px;
+  color: #fff;
+  z-index: 9999;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  background-color: #f2f2f2;
+}
+
+header h1 {
+  font-size: 24px;
+}
+
+#search-form {
+  display: flex;
+  align-items: center;
+}
+
+#search-input {
+  padding: 5px;
+  margin-right: 10px;
+}
+
+#user-profile {
+  display: flex;
+  align-items: center;
+}
+
+#user-avatar {
+  width: 30px;
+  height: 30px;
+  background-color: #ccc;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+#logout-button {
+  padding: 5px 10px;
+}
+
+main {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+#video-player {
+  flex: 1;
+}
+
+#video-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#video-list li {
+  margin-bottom: 10px;
+}
+
+#watch-later-list ul,
+#history-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#watch-later-list h3,
+#history-list h3 {
+  margin-top: 0;
+}
+
+footer {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+#video-upload-form {
+  margin-top: 20px;
+}
+
+#video-upload {
+  margin-right: 10px;
+}
+
+#logout-button,
+#video-upload-form button {
+  padding: 5px 10px;
+}
+// JavaScript code here
+const videoPlayer = document.getElementById('video');
+const videoLinks = document.querySelectorAll('#video-list a');
+const thumbnails = document.querySelectorAll('.thumbnail');
+const searchForm = document.getElementById('search-form');
+const searchInput = document.getElementById('search-input');
+const watchLaterList = document.querySelector('#watch-later-list ul');
+const historyList = document.querySelector('#history-list ul');
+const videoUploadForm = document.getElementById('video-upload-form');
+const videoUploadInput = document.getElementById('video-upload');
+let userAccessToken = null;
+
+// Loading screen
+window.addEventListener('load', function () {
+  const loadingScreen = document.getElementById('loading-screen');
+  loadingScreen.style.display = 'none';
+});
+
+// Facebook SDK initialization
+window.fbAsyncInit = function () {
+  FB.init({
+    appId: 'YOUR_APP_ID',
+    cookie: true,
+    xfbml: true,
+    version: 'v13.0'
+  });
+
+  FB.AppEvents.logPageView();
+};
+
+// Facebook login functionality
+function loginWithFacebook() {
+  FB.login(function (response) {
+    if (response.authResponse) {
+      // User is logged in and authorized
+      userAccessToken = response.authResponse.accessToken;
+      alert('Logged in with Facebook!');
+      // You can access the user's access token with response.authResponse.accessToken
+      // Implement further logic for data handling or user profile retrieval
+      getUserProfile();
+    } else {
+      // User cancelled the login or did not authorize the app
+      alert('Login with Facebook cancelled.');
+    }
+  }, { scope: 'email' }); // Add additional permissions if needed
+}
+
+// Logout functionality
+function logout() {
+  FB.logout(function (response) {
+    // User is logged out
+    userAccessToken = null;
+    alert('Logged out from Facebook!');
+    // Implement further logic for clearing user data or resetting the app state
+  });
+}
+
+// Get user profile information
+function getUserProfile() {
+  FB.api('/me', function (response) {
+    const userName = response.name;
+    const userAvatar = `https://graph.facebook.com/${response.id}/picture?type=square`;
+
+    document.getElementById('user-name').textContent = userName;
+    document.getElementById('user-avatar').style.backgroundImage = `url(${userAvatar})`;
+  });
+}
+
+// Bind Facebook login button click event
+document.getElementById('facebook-login-button').addEventListener('click', loginWithFacebook);
+
+// Bind logout button click event
+document.getElementById('logout-button').addEventListener('click', logout);
+
+videoLinks.forEach((link, index) => {
+  link.addEventListener('click', function (event) {
+    event.preventDefault();
+    const videoPath = this.dataset.video;
+    const thumbnailPath = this.dataset.thumbnail;
+
+    videoPlayer.innerHTML = '';
+
+    if (videoPath.endsWith('-4k.mp4')) {
+      const videoSource = document.createElement('source');
+      videoSource.src = videoPath;
+      videoSource.type = 'video/mp4';
+      videoPlayer.appendChild(videoSource);
+    }
+
+    videoPlayer.load();
+
+    thumbnails.forEach(thumbnail => {
+      thumbnail.classList.remove('active');
+    });
+
+    this.querySelector('.thumbnail').classList.add('active');
+
+    // Add video to history
+    if (!historyList.contains(index)) {
+      const videoItem = document.createElement('li');
+      videoItem.textContent = link.innerText;
+      historyList.appendChild(videoItem);
+    }
+  });
+});
+
+// Autoplay the first video on page load
+window.addEventListener('load', function () {
+  const firstVideoLink = videoLinks[0];
+  const firstVideoPath = firstVideoLink.dataset.video;
+  const firstThumbnail = firstVideoLink.querySelector('.thumbnail');
+
+  videoPlayer.innerHTML = '';
+
+  if (firstVideoPath.endsWith('-4k.mp4')) {
+    const videoSource = document.createElement('source');
+    videoSource.src = firstVideoPath;
+    videoSource.type = 'video/mp4';
+    videoPlayer.appendChild(videoSource);
+  }
+
+  videoPlayer.load();
+
+  firstThumbnail.classList.add('active');
+});
+
+// Watch Later functionality
+videoLinks.forEach((link, index) => {
+  const watchLaterButton = document.createElement('button');
+  watchLaterButton.textContent = 'Watch Later';
+  watchLaterButton.addEventListener('click', function () {
+    const videoItem = document.createElement('li');
+    videoItem.textContent = link.innerText;
+    watchLaterList.appendChild(videoItem);
+    alert('Video added to Watch Later');
+  });
+  link.appendChild(watchLaterButton);
+});
+
+// Search functionality
+searchForm.addEventListener('submit', function (event) {
+  event.preventDefault();
+  const searchValue = searchInput.value.toLowerCase();
+
+  videoLinks.forEach(link => {
+    const videoTitle = link.innerText.toLowerCase();
+    const videoItem = link.parentElement;
+
+    if (videoTitle.includes(searchValue)) {
+      videoItem.style.display = 'block';
+    } else {
+      videoItem.style.display = 'none';
+    }
+  });
+});
+
+// Video upload functionality
+videoUploadForm.addEventListener('submit', function (event) {
+  event.preventDefault();
+  const file = videoUploadInput.files[0];
+
+  if (file) {
+    const videoURL = URL.createObjectURL(file);
+    const videoSource = document.createElement('source');
+    videoSource.src = videoURL;
+    videoSource.type = 'video/mp4';
+    videoPlayer.innerHTML = '';
+    videoPlayer.appendChild(videoSource);
+    videoPlayer.load();
+    alert('Video uploaded successfully!');
+  } else {
+    alert('Please select a video file to upload.');
+  }
+
+  videoUploadInput.value = '';
+});
